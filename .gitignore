@@ -1,7 +1,5 @@
 # .gitignore
-# Ignore all documentation files
-/docs/
-*.md
+# Ignore technical documentation files
+/docs/StockKing_Technical_Development_Document.md
 *.docx
 *.pdf
-*.txt
