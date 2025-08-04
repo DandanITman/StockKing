@@ -1,0 +1,7 @@
+# .gitignore
+# Ignore all documentation files
+/docs/
+*.md
+*.docx
+*.pdf
+*.txt
