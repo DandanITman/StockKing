@@ -10,10 +10,15 @@
     "dev": "nodemon --exec ts-node src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["stocks", "trading", "api"],
+  "keywords": [
+    "stocks",
+    "trading",
+    "api"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.11.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",

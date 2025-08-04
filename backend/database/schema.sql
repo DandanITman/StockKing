@@ -47,7 +47,8 @@ CREATE TABLE IF NOT EXISTS stock_price_history (
     price DECIMAL(10,2) NOT NULL,
     volume BIGINT,
     timestamp TIMESTAMP NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(symbol, timestamp)
 );
 
 -- User preferences table
