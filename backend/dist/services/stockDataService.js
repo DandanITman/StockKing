@@ -67,13 +67,17 @@ class StockDataService {
                 price: parseFloat(row.price),
                 volume: row.volume,
                 timestamp: row.timestamp,
-                created_at: row.created_at,
+                created_at: row.created_at
             }));
         }
         catch (error) {
             console.error(`Error getting price history for ${symbol}:`, error);
             return [];
         }
+    }
+    // Alias for getPriceHistory for backward compatibility
+    async getHistoricalPrices(symbol, days = 30) {
+        return this.getPriceHistory(symbol, days);
     }
     // Populate historical data for a symbol
     async populateHistoricalData(symbol, days = 30) {

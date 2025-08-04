@@ -17,6 +17,7 @@ declare class StockDataService {
     updateStockPrice(symbol: string): Promise<StockPrice | null>;
     getLatestPrice(symbol: string): Promise<StockPrice | null>;
     getPriceHistory(symbol: string, days?: number): Promise<PriceHistoryEntry[]>;
+    getHistoricalPrices(symbol: string, days?: number): Promise<PriceHistoryEntry[]>;
     populateHistoricalData(symbol: string, days?: number): Promise<boolean>;
     updateAllTrackedStocks(): Promise<void>;
     searchStock(query: string): Promise<Array<{

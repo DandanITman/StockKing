@@ -1,6 +1,7 @@
 import express from 'express';
 import { pool } from '../database/connection.js';
 import { stockDataService } from '../services/stockDataService.js';
+import { technicalIndicatorsService } from '../services/technicalIndicatorsService.js';
 const router = express.Router();
 // Get all tracked stocks for a user
 router.get('/user/:userId', async (req, res) => {
@@ -142,6 +143,107 @@ router.post('/update-all', async (req, res) => {
     catch (error) {
         console.error('Error initiating price update:', error);
         res.status(500).json({ error: 'Failed to initiate price update' });
+    }
+});
+// Technical Analysis Endpoints
+// Get comprehensive technical analysis for a stock
+router.get('/analysis/:symbol', async (req, res) => {
+    try {
+        const { symbol } = req.params;
+        const analysis = await technicalIndicatorsService.getComprehensiveAnalysis(symbol.toUpperCase());
+        res.json(analysis);
+    }
+    catch (error) {
+        console.error(`Error getting technical analysis for ${req.params.symbol}:`, error);
+        res.status(500).json({
+            error: 'Failed to get technical analysis',
+            message: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+// Get specific technical indicator for a stock
+router.get('/indicators/:symbol/:indicator', async (req, res) => {
+    try {
+        const { symbol, indicator } = req.params;
+        const { period = '20' } = req.query;
+        // Get historical data first
+        const historyData = await stockDataService.getHistoricalPrices(symbol.toUpperCase());
+        if (!historyData || historyData.length === 0) {
+            return res.status(404).json({ error: 'No historical data found for symbol' });
+        }
+        const prices = historyData.map((item) => item.price);
+        const periodNum = parseInt(period, 10);
+        let result;
+        switch (indicator.toLowerCase()) {
+            case 'sma':
+                result = await technicalIndicatorsService.calculateSMA(prices, periodNum);
+                break;
+            case 'ema':
+                result = await technicalIndicatorsService.calculateEMA(prices, periodNum);
+                break;
+            case 'rsi':
+                result = await technicalIndicatorsService.calculateRSI(prices, periodNum);
+                break;
+            default:
+                return res.status(400).json({ error: 'Unsupported indicator. Available: sma, ema, rsi' });
+        }
+        res.json({
+            symbol: symbol.toUpperCase(),
+            indicator: result,
+            timestamp: new Date().toISOString()
+        });
+    }
+    catch (error) {
+        console.error(`Error calculating ${req.params.indicator} for ${req.params.symbol}:`, error);
+        res.status(500).json({
+            error: `Failed to calculate ${req.params.indicator}`,
+            message: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+// Get trading signals for multiple stocks (top performers)
+router.get('/signals/top', async (req, res) => {
+    try {
+        const { limit = '10' } = req.query;
+        const limitNum = parseInt(limit, 10);
+        // Get list of popular stocks to analyze (you could get this from your tracked_stocks table)
+        const popularStocks = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'NFLX', 'DIS', 'BABA'];
+        const signals = [];
+        for (let i = 0; i < Math.min(limitNum, popularStocks.length); i++) {
+            try {
+                const symbol = popularStocks[i];
+                if (symbol) {
+                    const analysis = await technicalIndicatorsService.getComprehensiveAnalysis(symbol);
+                    signals.push({
+                        symbol,
+                        signal: analysis.overallSignal,
+                        confidence: analysis.confidence,
+                        indicatorCount: analysis.indicators.length,
+                        buySignals: analysis.indicators.filter(ind => ind.signal === 'BUY').length,
+                        sellSignals: analysis.indicators.filter(ind => ind.signal === 'SELL').length,
+                        timestamp: analysis.timestamp
+                    });
+                }
+            }
+            catch (error) {
+                console.error(`Error analyzing ${popularStocks[i]}:`, error);
+                // Skip this stock and continue with others
+            }
+        }
+        // Sort by confidence descending
+        signals.sort((a, b) => b.confidence - a.confidence);
+        res.json({
+            signals,
+            timestamp: new Date().toISOString(),
+            totalAnalyzed: signals.length
+        });
+    }
+    catch (error) {
+        console.error('Error getting top signals:', error);
+        res.status(500).json({
+            error: 'Failed to get trading signals',
+            message: error instanceof Error ? error.message : 'Unknown error'
+        });
     }
 });
 export default router;
